@@ -1,0 +1,212 @@
+import argparse
+import configparser
+import os
+import logging
+
+try:
+    import pil
+    import auth
+    import logger
+    import helpers
+    import downloader
+    from constants import Constants
+except ImportError:
+    from . import pil
+    from . import auth
+    from . import logger
+    from . import helpers
+    from . import downloader
+    from .constants import Constants
+
+
+def validate_inputs(config, args, unknown_args):
+    error_arr = []
+    try:
+        config.read(pil.config_path)
+
+        if helpers.bool_str_parse(config.get('pyinstalive', 'log_to_file')) == "Invalid":
+            pil.log_to_file = False
+            error_arr.append(['log_to_file', 'False'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'log_to_file')):
+            pil.log_to_file = True
+        else:
+            pil.log_to_file = False
+
+        logger.banner()
+
+        if unknown_args:
+            pil.uargs = unknown_args
+            logger.warn("The following unknown argument(s) were provided and will be ignored: ")
+            logger.warn('    ' + ' '.join(unknown_args))
+            logger.separator()
+
+        pil.ig_user = config.get('pyinstalive', 'username')
+        pil.ig_pass = config.get('pyinstalive', 'password')
+        pil.dl_path = config.get('pyinstalive', 'download_path')
+        pil.run_at_start = config.get('pyinstalive', 'run_at_start')
+        pil.run_at_finish = config.get('pyinstalive', 'run_at_finish')
+        pil.args = args
+        pil.config = config
+
+        if args.configpath:
+            pil.config_path = args.configpath
+            if not os.path.isfile(pil.config_path):
+                pil.config_path = os.path.join(os.getcwd(), "pyinstalive.ini")
+                logger.warn("Custom config path is invalid, falling back to default path: {:s}".format(pil.config_path))
+                logger.separator()
+
+        if args.savepath:
+            pil.dl_path = args.savepath
+
+        if helpers.bool_str_parse(config.get('pyinstalive', 'show_cookie_expiry')) == "Invalid":
+            pil.show_cookie_expiry = False
+            error_arr.append(['show_cookie_expiry', 'False'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'show_cookie_expiry')):
+            pil.show_cookie_expiry = True
+        else:
+            pil.show_cookie_expiry = False
+
+        if helpers.bool_str_parse(config.get('pyinstalive', 'use_locks')) == "Invalid":
+            pil.use_locks = False
+            error_arr.append(['use_locks', 'False'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'use_locks')):
+            pil.use_locks = True
+        else:
+            pil.use_locks = False
+
+        if not args.nolives and helpers.bool_str_parse(config.get('pyinstalive', 'download_lives')) == "Invalid":
+            pil.dl_lives = True
+            error_arr.append(['download_lives', 'True'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'download_lives')):
+            pil.dl_lives = True
+        else:
+            pil.dl_lives = False
+
+        if not args.noreplays and helpers.bool_str_parse(config.get('pyinstalive', 'download_replays')) == "Invalid":
+            pil.dl_replays = True
+            error_arr.append(['download_replays', 'True'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'download_replays')):
+            pil.dl_replays = True
+        else:
+            pil.dl_replays = False
+
+        if helpers.bool_str_parse(config.get('pyinstalive', 'download_comments')) == "Invalid":
+            pil.dl_comments = True
+            error_arr.append(['download_comments', 'True'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'download_comments')):
+            pil.dl_comments = True
+        else:
+            pil.dl_comments = False
+
+        if not pil.ig_user or not len(pil.ig_user):
+            raise Exception("Invalid value for 'username'. This value is required.")
+
+        if not pil.ig_pass or not len(pil.ig_pass):
+            raise Exception("Invalid value for 'password'. This value is required.")
+
+        if not pil.dl_path.endswith('/'):
+            pil.dl_path = pil.dl_path + '/'
+        if not pil.dl_path or not os.path.exists(pil.dl_path):
+            pil.dl_path = os.getcwd()
+            if not args.savepath:
+                error_arr.append(['download_path', os.getcwd()])
+            else:
+                logger.warn("Custom config path is invalid, falling back to default path: {:s}".format(pil.dl_path))
+                logger.separator()
+
+        if args.nolives:
+            pil.dl_lives = False
+
+        if args.noreplays:
+            pil.dl_replays = False
+
+        if error_arr:
+            for error in error_arr:
+                logger.warn("Invalid value for '{:s}'. Using default value: {:s}".format(error[0], error[1]))
+                logger.separator()
+
+        if args.download:
+            pil.dl_user = args.download
+        elif not args.clean or args.info:
+            logger.error("Missing --download argument. This argument is required.")
+            logger.separator()
+            return False
+
+        if args.info:
+            helpers.show_info()
+            return False
+        if args.clean:
+            helpers.clean_download_dir()
+            return False
+
+        return True
+    except Exception as e:
+        logger.error("An error occurred: {:s}".format(str(e)))
+        logger.error("Make sure the config file and given arguments valid and try again.")
+        logger.separator()
+        return False
+
+
+def run():
+    pil.initialize()
+    logging.disable(logging.CRITICAL)
+    config = configparser.ConfigParser()
+    parser = argparse.ArgumentParser(
+        description="You are running PyInstaLive {:s} using Python {:s}".format(Constants.SCRIPT_VER,
+                                                                                Constants.PYTHON_VER))
+
+    parser.add_argument('-u', '--username', dest='username', type=str, required=False,
+                        help="Instagram username to login with.")
+    parser.add_argument('-p', '--password', dest='password', type=str, required=False,
+                        help="Instagram password to login with.")
+    parser.add_argument('-d', '--download', dest='download', type=str, required=False,
+                        help="The username of the user whose livestream or replay you want to save.")
+    parser.add_argument('-i', '--info', dest='info', action='store_true', help="View information about PyInstaLive.")
+    parser.add_argument('-nr', '--noreplays', dest='noreplays', action='store_true',
+                        help="When used, do not check for any available replays.")
+    parser.add_argument('-nl', '--nolives', dest='nolives', action='store_true',
+                        help="When used, do not check for any available livestreams.")
+    parser.add_argument('-cl', '--clean', dest='clean', action='store_true',
+                        help="PyInstaLive will clean the current download folder of all leftover files.")
+    parser.add_argument('-cp', '--configpath', dest='configpath', type=str, required=False,
+                        help="Path to a PyInstaLive configuration file.")
+    parser.add_argument('-sp', '--savepath', dest='savepath', type=str, required=False,
+                        help="Path to folder where PyInstaLive should save livestreams and replays.")
+
+    # Workaround to 'disable' argument abbreviations
+    parser.add_argument('--usernamx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--passworx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--recorx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--infx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--noreplayx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--cleax', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--downloadfollowinx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--configpatx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('--confix', help=argparse.SUPPRESS, metavar='IGNORE')
+
+    parser.add_argument('-cx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('-nx', help=argparse.SUPPRESS, metavar='IGNORE')
+    parser.add_argument('-dx', help=argparse.SUPPRESS, metavar='IGNORE')
+
+    args, unknown_args = parser.parse_known_args()  # Parse arguments
+
+    if not os.path.exists(pil.config_path):  # Create new config if it doesn't exist
+        logger.banner()
+        helpers.new_config()
+        return
+
+    if validate_inputs(config, args, unknown_args):
+        if not args.username and not args.password:
+            pil.ig_api = auth.authenticate(username=pil.ig_user, password=pil.ig_pass)
+        elif (args.username and not args.password) or (args.password and not args.username):
+            logger.warn("Missing --username or --password argument. Falling back to config file.")
+            logger.separator()
+            pil.ig_api = auth.authenticate(username=pil.ig_user, password=pil.ig_pass)
+        elif args.username and args.password:
+            logger.binfo("Overriding config file with login from arguments.")
+            logger.separator()
+            pil.ig_api = auth.authenticate(username=args.username, password=args.password, force_use_login_args=True)
+
+        if pil.ig_api:
+            downloader.start()
+

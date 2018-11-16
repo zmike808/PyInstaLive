@@ -1,4 +1,4 @@
-from .initialize import run
+from pyinstalive.startup import run
 
 
 def main():
