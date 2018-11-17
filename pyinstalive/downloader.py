@@ -12,15 +12,18 @@ except ImportError:
     def start():
         if not helpers.check_lock_file():
             helpers.create_lock_user()
+            checking_self = pil.dl_user == pil.ig_api.authenticated_user_name
             if dlfuncs.get_broadcasts_info():
                 if pil.dl_lives:
-                    if pil.livestream_obj:
+                    if checking_self:
+                        logger.warn("Login with a different account to download your own livestreams.")
+                    elif pil.livestream_obj:
                         logger.info("Livestream available, starting download.")
                         dlfuncs.download_livestream()
                     else:
                         logger.info('There are no available livestreams.')
                 else:
-                    logger.binfo("Livestream saving is disabled either with an argument or in the config file.")
+                    logger.binfo("Livestream downloading is disabled either with an argument or in the config file.")
 
                 logger.separator()
 
@@ -31,9 +34,9 @@ except ImportError:
                                 pil.replays_obj) > 1 else "replay"))
                         dlfuncs.download_replays()
                     else:
-                        logger.info('There are no available replays.')
+                        logger.info('There are no available replays{:s}.'.format(" saved on your account" if checking_self else ""))
                 else:
-                    logger.binfo("Replay saving is disabled either with an argument or in the config file.")
+                    logger.binfo("Replay downloading is disabled either with an argument or in the config file.")
 
             helpers.remove_lock()
             logger.separator()
