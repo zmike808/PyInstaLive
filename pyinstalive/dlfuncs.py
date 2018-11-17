@@ -59,6 +59,7 @@ def get_stream_duration(compare_time, get_missing=False):
 
 def get_user_id():
     is_user_id = False
+    user_id = None
     try:
         user_id = int(pil.dl_user)
         is_user_id = True
@@ -73,48 +74,54 @@ def get_user_id():
                 logger.error('Could not resolve host, check your internet connection.')
             if "timed out" in str(cce):
                 logger.error('The connection timed out, check your internet connection.')
-            logger.separator()
         except ClientThrottledError as cte:
             logger.error(
                 "Could not get user info for '{:s}': {:d} {:s}".format(pil.dl_user, cte.code, str(cte)))
-            logger.separator()
         except ClientError as ce:
             logger.error(
                 "Could not get user info for '{:s}': {:d} {:s}".format(pil.dl_user, ce.code, str(ce)))
             if "Not Found" in str(ce):
                 logger.error('The specified user does not exist.')
-            logger.separator()
         except Exception as e:
             logger.error("Could not get user info for '{:s}': {:s}".format(pil.dl_user, str(e)))
-            logger.separator()
         except KeyboardInterrupt:
             logger.binfo("Aborted getting user info for '{:s}', exiting.".format(pil.dl_user))
-            logger.separator()
-    if is_user_id:
+    if user_id and is_user_id:
         logger.info("Getting info for '{:s}' successful. Assuming input is an user Id.".format(pil.dl_user))
-    else:
+        logger.separator()
+        return user_id
+    elif user_id:
         logger.info("Getting info for '{:s}' successful.".format(pil.dl_user))
-    logger.separator()
-    return user_id
+        logger.separator()
+        return user_id
+    else:
+        return None
 
 
 def get_broadcasts_info():
     try:
         user_id = get_user_id()
-        broadcasts = pil.ig_api.user_story_feed(user_id)
-        pil.livestream_obj = broadcasts.get('broadcast')
-        pil.replays_obj = broadcasts.get('post_live_item', {}).get('broadcasts', [])
+        if user_id:
+            broadcasts = pil.ig_api.user_story_feed(user_id)
+            pil.livestream_obj = broadcasts.get('broadcast')
+            pil.replays_obj = broadcasts.get('post_live_item', {}).get('broadcasts', [])
+            return True
+        else:
+            return False
     except Exception as e:
         logger.error('Could not finish checking: {:s}'.format(str(e)))
         if "timed out" in str(e):
             logger.error('The connection timed out, check your internet connection.')
         logger.separator()
+        return False
     except KeyboardInterrupt:
         logger.binfo('Aborted checking for livestreams and replays, exiting.'.format(pil.dl_user))
         logger.separator()
+        return False
     except ClientThrottledError as cte:
         logger.error('Could not check because you are making too many requests at this time.')
         logger.separator()
+        return False
 
 
 def merge_segments():
