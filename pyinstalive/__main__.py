@@ -1,9 +1,12 @@
-from pyinstalive.startup import run
+try:  # Python 2
+    import startup
+except ImportError:  # Python 3
+    from . import startup
 
 
 def main():
-    run()
+    startup.run()
 
 
 if __name__ == '__main__':
-    run()
+    startup.run()
