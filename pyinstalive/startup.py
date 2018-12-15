@@ -9,6 +9,7 @@ try:
     import logger
     import helpers
     import downloader
+    import assembler
     from constants import Constants
 except ImportError:
     from . import pil
@@ -16,6 +17,7 @@ except ImportError:
     from . import logger
     from . import helpers
     from . import downloader
+    from . import assembler
     from .constants import Constants
 
 
@@ -127,7 +129,8 @@ def validate_inputs(config, args, unknown_args):
 
         if args.download:
             pil.dl_user = args.download
-        elif not args.clean or args.info:
+        elif not args.clean and not args.info and not args.assemble:
+            print(args.assemble)
             logger.error("Missing --download argument. This argument is required.")
             logger.separator()
             return False
@@ -135,8 +138,12 @@ def validate_inputs(config, args, unknown_args):
         if args.info:
             helpers.show_info()
             return False
-        if args.clean:
+        elif args.clean:
             helpers.clean_download_dir()
+            return False
+        elif args.assemble:
+            pil.assemble_arg = args.assemble
+            assembler.assemble()
             return False
 
         return True
@@ -172,6 +179,8 @@ def run():
                         help="Path to a PyInstaLive configuration file.")
     parser.add_argument('-sp', '--savepath', dest='savepath', type=str, required=False,
                         help="Path to folder where PyInstaLive should save livestreams and replays.")
+    parser.add_argument('-as', '--assemble', dest='assemble', type=str, required=False,
+                        help="Path to json file required by the assembler to generate a video file from the segments.")
 
     # Workaround to 'disable' argument abbreviations
     parser.add_argument('--usernamx', help=argparse.SUPPRESS, metavar='IGNORE')

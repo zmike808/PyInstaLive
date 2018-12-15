@@ -34,9 +34,8 @@ except ImportError:
 from instagram_private_api import ClientError
 
 """
-This feature of PyInstaLive was originally written by https://github.com/taengstagram
-The code below and in dlfuncs.py that's related to the comment downloading
-feature was modified by https://github.com/notcammy
+The content of this file was originally written by https://github.com/taengstagram
+The code has been edited for use in PyInstaLive.
 """
 
 

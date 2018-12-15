@@ -37,6 +37,7 @@ def initialize():
     global use_locks
     global comment_thread_worker
     global segments_json_thread_worker
+    global assemble_arg
     ig_api = None
     ig_user = ""
     ig_pass = ""
@@ -62,3 +63,4 @@ def initialize():
     use_locks = False
     comment_thread_worker = None
     segments_json_thread_worker = None
+    assemble_arg = None
