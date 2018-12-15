@@ -36,6 +36,7 @@ def initialize():
     global live_folder_path
     global use_locks
     global comment_thread_worker
+    global segments_json_thread_worker
     ig_api = None
     ig_user = ""
     ig_pass = ""
@@ -60,3 +61,4 @@ def initialize():
     live_folder_path = ""
     use_locks = False
     comment_thread_worker = None
+    segments_json_thread_worker = None

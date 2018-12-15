@@ -64,6 +64,19 @@ def bool_str_parse(bool_str):
         return "Invalid"
 
 
+def generate_json_segments():
+    while not pil.broadcast_downloader.is_aborted:
+        time.sleep(2.5)
+        if 'initial_buffered_duration' not in pil.livestream_obj and pil.broadcast_downloader.initial_buffered_duration:
+            pil.livestream_obj['initial_buffered_duration'] = pil.broadcast_downloader.initial_buffered_duration
+        pil.livestream_obj['segments'] = pil.broadcast_downloader.segment_meta
+        try:
+            with open(pil.live_folder_path + ".json", 'w') as json_file:
+                json.dump(pil.livestream_obj, json_file, indent=2)
+        except Exception as e:
+            logger.warn(str(e))
+
+
 def clean_download_dir():
     dir_delcount = 0
     error_count = 0

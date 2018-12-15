@@ -3,6 +3,7 @@ import shutil
 import sys
 import threading
 import time
+import json
 from xml.dom.minidom import parseString
 
 from instagram_private_api import ClientConnectionError
@@ -137,6 +138,10 @@ def merge_segments():
 
         live_mp4_file = '{}{}_{}_{}_live.mp4'.format(pil.dl_path, pil.datetime_compat, pil.dl_user,
                                                      pil.livestream_obj.get('id'))
+
+        if pil.segments_json_thread_worker and pil.segments_json_thread_worker.is_alive():
+            pil.segments_json_thread_worker.join()
+
         if pil.comment_thread_worker and pil.comment_thread_worker.is_alive():
             logger.info("Waiting for comment downloader to finish.")
             pil.comment_thread_worker.join()
@@ -207,6 +212,8 @@ def download_livestream():
         # logger.info('MPD URL     : {:s}'.format(mpd_url))
         logger.separator()
         helpers.create_lock_folder()
+        pil.segments_json_thread_worker = threading.Thread(target=helpers.generate_json_segments)
+        pil.segments_json_thread_worker.start()
         logger.info('Downloading livestream, press [CTRL+C] to abort.')
 
         if pil.run_at_start:
