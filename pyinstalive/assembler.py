@@ -169,7 +169,8 @@ def assemble():
             '-c:v', 'copy', '-c:a', 'copy', ass_mp4_file]
         fnull = open(os.devnull, 'w')
         exit_code = subprocess.call(cmd, stdout=fnull, stderr=subprocess.STDOUT)
-        logger.warn("FFmpeg exit code not '0' but '{:d}'.".format(exit_code))
+        if exit_code != 0:
+            logger.warn("FFmpeg exit code not '0' but '{:d}'.".format(exit_code))
         logger.separator()
         logger.info('The video file has been generated: %s' % os.path.basename(ass_mp4_file))
         logger.separator()
