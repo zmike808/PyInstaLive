@@ -38,6 +38,7 @@ def initialize():
     global comment_thread_worker
     global segments_json_thread_worker
     global assemble_arg
+    global ffmpeg_path
     ig_api = None
     ig_user = ""
     ig_pass = ""
@@ -64,3 +65,4 @@ def initialize():
     comment_thread_worker = None
     segments_json_thread_worker = None
     assemble_arg = None
+    ffmpeg_path = None

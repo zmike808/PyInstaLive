@@ -3,7 +3,7 @@ import shutil
 import sys
 import threading
 import time
-import json
+
 from xml.dom.minidom import parseString
 
 from instagram_private_api import ClientConnectionError
@@ -191,7 +191,8 @@ def download_livestream():
             duplicate_etag_retry=30,
             callback_check=print_status,
             mpd_download_timeout=3,
-            download_timeout=3)
+            download_timeout=3,
+            ffmpeg_binary=pil.ffmpeg_path)
     except Exception as e:
         logger.error('Could not start downloading livestream: {:s}'.format(str(e)))
         logger.separator()
@@ -294,7 +295,8 @@ def download_replays():
                 broadcast_downloader = replay.Downloader(
                     mpd=replay_obj.get('dash_manifest'),
                     output_dir=pil.live_folder_path,
-                    user_agent=pil.ig_api.user_agent)
+                    user_agent=pil.ig_api.user_agent,
+                    ffmpeg_binary=pil.ffmpeg_path)
                 if pil.use_locks:
                     helpers.create_lock_folder()
                 replay_mp4_file = '{}{}_{}_{}_replay.mp4'.format(pil.dl_path, pil.datetime_compat,

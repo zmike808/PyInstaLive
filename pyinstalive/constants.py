@@ -14,6 +14,7 @@ download_replays = True
 download_comments = true
 show_cookie_expiry = True
 log_to_file = True
+ffmpeg_path = 
 run_at_start =
 run_at_finish =
 use_locks = True

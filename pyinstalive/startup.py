@@ -2,6 +2,8 @@ import argparse
 import configparser
 import os
 import logging
+import platform
+import subprocess
 
 try:
     import pil
@@ -47,6 +49,7 @@ def validate_inputs(config, args, unknown_args):
         pil.dl_path = config.get('pyinstalive', 'download_path')
         pil.run_at_start = config.get('pyinstalive', 'run_at_start')
         pil.run_at_finish = config.get('pyinstalive', 'run_at_finish')
+        pil.ffmpeg_path = config.get('pyinstalive', 'ffmpeg_path')
         pil.args = args
         pil.config = config
 
@@ -100,6 +103,15 @@ def validate_inputs(config, args, unknown_args):
         else:
             pil.dl_comments = False
 
+        if pil.ffmpeg_path:
+            if not os.path.isfile(pil.ffmpeg_path):
+                pil.ffmpeg_path = None
+                cmd = "where" if platform.system() == "Windows" else "which"
+                logger.warn("Custom ffmpeg binary path is invalid, falling back to default path: {:s}".format(
+                    subprocess.check_output([cmd, 'ffmpeg']).decode('UTF-8').rstrip()))
+            else:
+                logger.binfo("Overriding ffmpeg binary path: {:s}".format(pil.ffmpeg_path))
+
         if not pil.ig_user or not len(pil.ig_user):
             raise Exception("Invalid value for 'username'. This value is required.")
 
@@ -130,7 +142,6 @@ def validate_inputs(config, args, unknown_args):
         if args.download:
             pil.dl_user = args.download
         elif not args.clean and not args.info and not args.assemble:
-            print(args.assemble)
             logger.error("Missing --download argument. This argument is required.")
             logger.separator()
             return False
