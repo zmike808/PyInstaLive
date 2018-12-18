@@ -80,14 +80,17 @@ def generate_json_segments():
 
 def clean_download_dir():
     dir_delcount = 0
+    file_delcount = 0
     error_count = 0
     lock_count = 0
     try:
         logger.info('Cleaning up temporary files and folders...')
         if Constants.PYTHON_VER[0] == "2":
             directories = (os.walk(pil.dl_path).next()[1])
+            files = (os.walk(pil.dl_path).next()[2])
         else:
             directories = (os.walk(pil.dl_path).__next__()[1])
+            files = (os.walk(pil.dl_path).__next__()[2])
 
         for directory in directories:
             if directory.endswith('_downloads'):
@@ -102,24 +105,38 @@ def clean_download_dir():
                 else:
                     lock_count += 1
         logger.separator()
-        if dir_delcount == 0 and error_count == 0 and lock_count == 0:
-            logger.info('The cleanup has finished. No folders were removed.')
+        for file in files:
+            if file.endswith('_downloads.json'):
+                if not any(filename.endswith('.lock') for filename in
+                           os.listdir(os.path.join(pil.dl_path))):
+                    try:
+                        os.remove(os.path.join(pil.dl_path, file))
+                        file_delcount += 1
+                    except Exception as e:
+                        logger.error("Could not remove file: {:s}".format(str(e)))
+                        error_count += 1
+                else:
+                    lock_count += 1
+        if dir_delcount == 0 and file_delcount == 0 and error_count == 0 and lock_count == 0:
+            logger.info('The cleanup has finished. No items were removed.')
             logger.separator()
             return
         logger.info('The cleanup has finished.')
         logger.info('Folders removed:     {:d}'.format(dir_delcount))
-        logger.info('Locked folders:      {:d}'.format(lock_count))
+        logger.info('Files removed:       {:d}'.format(file_delcount))
+        logger.info('Locked items:        {:d}'.format(lock_count))
         logger.info('Errors:              {:d}'.format(error_count))
         logger.separator()
     except KeyboardInterrupt as e:
         logger.separator()
         logger.warn("The cleanup has been aborted.")
-        if dir_delcount == 0 and error_count == 0 and lock_count == 0:
-            logger.info('No folders were removed.')
+        if dir_delcount == 0 and file_delcount == 0 and error_count == 0 and lock_count == 0:
+            logger.info('No items were removed.')
             logger.separator()
             return
         logger.info('Folders removed:     {:d}'.format(dir_delcount))
-        logger.info('Locked folders:      {:d}'.format(lock_count))
+        logger.info('Files removed:       {:d}'.format(file_delcount))
+        logger.info('Locked items  :      {:d}'.format(lock_count))
         logger.info('Errors:              {:d}'.format(error_count))
         logger.separator()
 
