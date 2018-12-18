@@ -28,32 +28,27 @@ except ImportError:
     from .comments import CommentsDownloader
 
 
-def get_stream_duration(compare_time, get_missing=False):
+def get_stream_duration(duration_type):
     try:
-        had_wrong_time = False
-        if get_missing:
-            if int(time.time()) < int(compare_time):
-                had_wrong_time = True
-                corrected_compare_time = int(compare_time) - 5
-                download_time = int(time.time()) - int(corrected_compare_time)
+        # For some reason the published_time is roughly 40 seconds behind real world time
+        if duration_type == 0: # Airtime duration
+            stream_started_mins, stream_started_secs = divmod((int(time.time()) - pil.livestream_obj.get("published_time") + 40), 60)
+        if duration_type == 1: # Download duration
+            stream_started_mins, stream_started_secs = divmod((int(time.time()) - int(pil.epochtime)), 60)
+        if duration_type == 2: # Missing duration
+            if (int(pil.epochtime) - pil.livestream_obj.get("published_time") + 40) <= 0:
+                stream_started_mins, stream_started_secs = 0, 0 # Download started 'earlier' than actual broadcast, assume started at the same time instead
             else:
-                download_time = int(time.time()) - int(compare_time)
-            stream_time = int(time.time()) - int(pil.livestream_obj.get('published_time'))
-            stream_started_mins, stream_started_secs = divmod(stream_time - download_time, 60)
-        else:
-            if int(time.time()) < int(compare_time):
-                had_wrong_time = True
-                corrected_compare_time = int(compare_time) - 5
-                stream_started_mins, stream_started_secs = divmod((int(time.time()) - int(corrected_compare_time)), 60)
-            else:
-                stream_started_mins, stream_started_secs = divmod((int(time.time()) - int(compare_time)), 60)
+                stream_started_mins, stream_started_secs = divmod((int(pil.epochtime) - pil.livestream_obj.get("published_time") + 40), 60)
+
+        if stream_started_mins < 0:
+            stream_started_mins = 0
+        if stream_started_secs < 0:
+            stream_started_secs = 0
         stream_duration_str = '%d minutes' % stream_started_mins
         if stream_started_secs:
             stream_duration_str += ' and %d seconds' % stream_started_secs
-        if had_wrong_time:
-            return "{:s} (corrected)".format(stream_duration_str)
-        else:
-            return stream_duration_str
+        return stream_duration_str
     except Exception as e:
         return "Not available"
 
@@ -173,7 +168,7 @@ def download_livestream():
             else:
                 logger.info('Username    : {:s}'.format(pil.dl_user))
             logger.info('Viewers     : {:s} watching'.format(str(int(viewers))))
-            logger.info('Airing time : {:s}'.format(get_stream_duration(pil.livestream_obj.get('published_time'))))
+            logger.info('Airing time : {:s}'.format(get_stream_duration(0)))
             logger.info('Status      : {:s}'.format(heartbeat_info.get('broadcast_status').title()))
             return heartbeat_info.get('broadcast_status') not in ['active', 'interrupted']
 
@@ -236,20 +231,20 @@ def download_livestream():
                 logger.error('An error occurred while downloading comments: {:s}'.format(str(e)))
         pil.broadcast_downloader.run()
         logger.separator()
-        logger.info('Download duration : {}'.format(get_stream_duration(int(pil.epochtime))))
-        logger.info('Stream duration   : {}'.format(get_stream_duration(pil.livestream_obj.get('published_time'))))
-        logger.info(
-            'Missing (approx.) : {}'.format(get_stream_duration(int(pil.epochtime), get_missing=True)))
+        logger.info("The livestream has been ended by the user.")
+        logger.separator()
+        logger.info('Airtime duration  : {}'.format(get_stream_duration(0)))
+        logger.info('Download duration : {}'.format(get_stream_duration(1)))
+        logger.info('Missing (approx.) : {}'.format(get_stream_duration(2)))
         logger.separator()
         merge_segments()
     except KeyboardInterrupt:
         logger.separator()
         logger.binfo('The download has been aborted.')
         logger.separator()
-        logger.info('Download duration : {}'.format(get_stream_duration(int(pil.epochtime))))
-        logger.info('Stream duration   : {}'.format(get_stream_duration(pil.livestream_obj.get('published_time'))))
-        logger.info(
-            'Missing (approx.) : {}'.format(get_stream_duration(int(pil.epochtime), get_missing=True)))
+        logger.info('Airtime duration  : {}'.format(get_stream_duration(0)))
+        logger.info('Download duration : {}'.format(get_stream_duration(1)))
+        logger.info('Missing (approx.) : {}'.format(get_stream_duration(2)))
         logger.separator()
         if not pil.broadcast_downloader.is_aborted:
             pil.broadcast_downloader.stop()
