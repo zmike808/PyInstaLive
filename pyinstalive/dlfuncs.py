@@ -205,7 +205,6 @@ def download_livestream():
             logger.binfo('This livestream is a dual-live, the current guest is "{}".'.format(broadcast_guest))
         logger.separator()
         print_status(False)
-        # logger.info('MPD URL     : {:s}'.format(mpd_url))
         logger.separator()
         helpers.create_lock_folder()
         pil.segments_json_thread_worker = threading.Thread(target=helpers.generate_json_segments)
@@ -382,8 +381,8 @@ def get_live_comments(comments_json_file):
                     return True
             else:
                 logger.info("There are no available comments to save.")
-                return False
                 logger.separator()
+                return False
         except Exception as e:
             logger.error('Could not save comments: {:s}'.format(str(e)))
             return False
