@@ -41,6 +41,10 @@ def assemble():
             logger.error('Broadcast json file does not exist: %s' % ass_json_file)
             logger.separator()
             sys.exit(1)
+        elif not ass_json_file.endswith(".json"):
+            logger.error('The selected file is not a json file.')
+            logger.separator()
+            sys.exit(1)
         if not os.path.exists(ass_segment_dir):
             logger.error('Segment directory does not exist: %s' % ass_segment_dir)
             if os.path.isfile(ass_json_file):
@@ -70,7 +74,6 @@ def assemble():
                 glob.glob(os.path.join(ass_segment_dir, '%s-*.m4v' % stream_id))))
 
         all_segments = sorted(all_segments, key=lambda x: _get_file_index(x))
-        prev_res = ''
         sources = []
         audio_stream_format = 'assembled_source_{0}_{1}_mp4.tmp'
         video_stream_format = 'assembled_source_{0}_{1}_m4a.tmp'
@@ -79,7 +82,7 @@ def assemble():
         for segment in all_segments:
 
             if not os.path.isfile(segment.replace('.m4v', '.m4a')):
-                logger.warning('Audio segment not found: {0!s}'.format(segment.replace('.m4v', '.m4a')))
+                logger.warn('Audio segment not found: {0!s}'.format(segment.replace('.m4v', '.m4a')))
                 continue
 
             if segment.endswith('-init.m4v'):
