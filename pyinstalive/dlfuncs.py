@@ -17,12 +17,14 @@ try:
     import helpers
     import pil
     import dlfuncs
+    import assembler
     from constants import Constants
     from comments import CommentsDownloader
 except ImportError:
     from . import logger
     from . import helpers
     from . import pil
+    from . import assembler
     from . import dlfuncs
     from .constants import Constants
     from .comments import CommentsDownloader
@@ -134,6 +136,8 @@ def merge_segments():
         live_mp4_file = '{}{}_{}_{}_live.mp4'.format(pil.dl_path, pil.datetime_compat, pil.dl_user,
                                                      pil.livestream_obj.get('id'))
 
+        live_segments_path = os.path.normpath(pil.broadcast_downloader.output_dir)
+
         if pil.segments_json_thread_worker and pil.segments_json_thread_worker.is_alive():
             pil.segments_json_thread_worker.join()
 
@@ -147,8 +151,18 @@ def merge_segments():
             logger.info('Successfully merged downloaded files into video.')
             helpers.remove_lock()
         except ValueError as e:
-            logger.error('Could not merged downloaded files: {:s}'.format(str(e)))
-            logger.error('Likely the download duration was too short and no temp files were saved.')
+            logger.separator()
+            logger.error('Could not merge downloaded files: {:s}'.format(str(e)))
+            if os.listdir(live_segments_path):
+                logger.separator()
+                logger.binfo("Segment directory is not empty. Trying to merge again.")
+                logger.separator()
+                pil.assemble_arg = live_mp4_file.replace(".mp4", "_downloads.json")
+                assembler.assemble(user_called=False)
+            else:
+                logger.separator()
+                logger.error("Segment directory is empty. There is nothing to merge.")
+                logger.separator()
             helpers.remove_lock()
         except Exception as e:
             logger.error('Could not merge downloaded files: {:s}'.format(str(e)))
@@ -336,7 +350,7 @@ def download_replays():
         try:
             shutil.rmtree(pil.live_folder_path)
         except Exception as e:
-            logger.error("Could not remove temp folder: {:s}".format(str(e)))
+            logger.error("Could not remove segment folder: {:s}".format(str(e)))
             sys.exit(1)
         helpers.remove_lock()
         sys.exit(0)

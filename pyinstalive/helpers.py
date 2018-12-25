@@ -66,7 +66,6 @@ def bool_str_parse(bool_str):
 
 def generate_json_segments():
     while not pil.broadcast_downloader.is_aborted:
-        time.sleep(2.5)
         pil.livestream_obj['delay'] = (int(pil.epochtime) - pil.livestream_obj['published_time'])
         if 'initial_buffered_duration' not in pil.livestream_obj and pil.broadcast_downloader.initial_buffered_duration:
             pil.livestream_obj['initial_buffered_duration'] = pil.broadcast_downloader.initial_buffered_duration
@@ -74,6 +73,7 @@ def generate_json_segments():
         try:
             with open(pil.live_folder_path + ".json", 'w') as json_file:
                 json.dump(pil.livestream_obj, json_file, indent=2)
+            time.sleep(2.5)
         except Exception as e:
             logger.warn(str(e))
 

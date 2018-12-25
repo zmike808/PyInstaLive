@@ -5,17 +5,16 @@ import glob
 import subprocess
 import json
 import sys
-
-from moviepy.video.io.VideoFileClip import VideoFileClip
-
 try:
     import pil
     import logger
     import helpers
+    from constants import Constants
 except ImportError:
     from . import pil
     from . import logger
     from . import helpers
+    from .constants import Constants
 
 """
 The content of this file was originally written by https://github.com/taengstagram
@@ -31,36 +30,31 @@ def _get_file_index(filename):
     return -1
 
 
-def assemble():
+def assemble(user_called=True):
     try:
-        ass_json_file = pil.assemble_arg
-        ass_mp4_file = os.path.join(pil.dl_path, os.path.basename(ass_json_file).replace("_downloads.json", ".mp4"))
+        ass_json_file = pil.assemble_arg if pil.assemble_arg.endswith(".json") else pil.assemble_arg + ".json"
+        ass_mp4_file = os.path.join(pil.dl_path, os.path.basename(ass_json_file).replace("_downloads", "").replace(".json", ".mp4"))
         ass_segment_dir = pil.assemble_arg.split('.')[0]
-
+        broadcast_info = {}
+        if not os.path.isdir(ass_segment_dir) or not os.listdir(ass_segment_dir):
+            logger.error('Segment directory does not exist or is empty: %s' % ass_segment_dir)
+            logger.separator()
+            sys.exit(1)
         if not os.path.isfile(ass_json_file):
-            logger.error('Broadcast json file does not exist: %s' % ass_json_file)
-            logger.separator()
-            sys.exit(1)
-        elif not ass_json_file.endswith(".json"):
-            logger.error('The selected file is not a json file.')
-            logger.separator()
-            sys.exit(1)
-        if not os.path.exists(ass_segment_dir):
-            logger.error('Segment directory does not exist: %s' % ass_segment_dir)
-            if os.path.isfile(ass_json_file):
-                logger.error("The segment directory must have the same name as the json file.")
-            logger.separator()
-            sys.exit(1)
-
-        logger.info("Assembling video files from json file: {:s}".format(os.path.basename(pil.assemble_arg)))
-
-        with open(ass_json_file) as info_file:
-            broadcast_info = json.load(info_file)
+            logger.warn("No matching json file found for the segment directory, trying to continue without it.")
+            ass_stream_id = os.listdir(ass_segment_dir)[0].split('-')[0]
+            broadcast_info['id'] = ass_stream_id
+            broadcast_info['broadcast_status'] = "active"
+            broadcast_info['segments'] = {}
+        else:
+            with open(ass_json_file) as info_file:
+                broadcast_info = json.load(info_file)
 
         if broadcast_info.get('broadcast_status', '') == 'post_live':
             logger.error('Segments from replay downloads cannot be assembled.')
             sys.exit(1)
 
+        logger.info("Assembling video segments from folder: {}".format(ass_segment_dir))
         stream_id = str(broadcast_info['id'])
 
         segment_meta = broadcast_info.get('segments', {})
@@ -123,6 +117,7 @@ def assemble():
                 logger.warn("FFmpeg exit code not '0' but '{:d}'.".format(exit_code))
             logger.separator()
             logger.info('The video file has been generated: %s' % os.path.basename(ass_mp4_file))
-            logger.separator()
+            if user_called:
+                logger.separator()
     except Exception as e:
         logger.error("An error occurred: {:s}".format(str(e)))
