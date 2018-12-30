@@ -39,6 +39,7 @@ def initialize():
     global segments_json_thread_worker
     global assemble_arg
     global ffmpeg_path
+    global clear_temp_files
     ig_api = None
     ig_user = ""
     ig_pass = ""
@@ -61,8 +62,9 @@ def initialize():
     epochtime = helpers.strepochtime()
     datetime_compat = helpers.strdatetime_compat(epochtime)
     live_folder_path = ""
-    use_locks = False
+    use_locks = True
     comment_thread_worker = None
     segments_json_thread_worker = None
     assemble_arg = None
     ffmpeg_path = None
+    clear_temp_files = False

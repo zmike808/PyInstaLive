@@ -79,6 +79,14 @@ def validate_inputs(config, args, unknown_args):
         else:
             pil.use_locks = False
 
+        if helpers.bool_str_parse(config.get('pyinstalive', 'clear_temp_files')) == "Invalid":
+            pil.clear_temp_files = False
+            error_arr.append(['clear_temp_files', 'False'])
+        elif helpers.bool_str_parse(config.get('pyinstalive', 'clear_temp_files')):
+            pil.clear_temp_files = True
+        else:
+            pil.clear_temp_files = False
+
         if not args.nolives and helpers.bool_str_parse(config.get('pyinstalive', 'download_lives')) == "Invalid":
             pil.dl_lives = True
             error_arr.append(['download_lives', 'True'])
@@ -160,7 +168,7 @@ def validate_inputs(config, args, unknown_args):
         return True
     except Exception as e:
         logger.error("An error occurred: {:s}".format(str(e)))
-        logger.error("Make sure the config file and given arguments valid and try again.")
+        logger.error("Make sure the config file and given arguments are valid and try again.")
         logger.separator()
         return False
 

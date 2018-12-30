@@ -103,6 +103,7 @@ def banner():
                                                                     helpers.strdatetime()))
     separator()
 
+
 def _log_to_file(log_str):
     try:
         with open("pyinstalive{:s}.log".format(

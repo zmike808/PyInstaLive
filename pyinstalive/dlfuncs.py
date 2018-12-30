@@ -147,7 +147,7 @@ def merge_segments():
 
         logger.info('Merging downloaded files into video.')
         try:
-            pil.broadcast_downloader.stitch(live_mp4_file, cleartempfiles=False)
+            pil.broadcast_downloader.stitch(live_mp4_file, cleartempfiles=pil.clear_temp_files)
             logger.info('Successfully merged downloaded files into video.')
             helpers.remove_lock()
         except ValueError as e:
@@ -315,7 +315,7 @@ def download_replays():
 
                 pil.comment_thread_worker = threading.Thread(target=get_replay_comments, args=(comments_json_file,))
 
-                broadcast_downloader.download(replay_mp4_file, cleartempfiles=False)
+                broadcast_downloader.download(replay_mp4_file, cleartempfiles=pil.clear_temp_files)
 
                 if pil.dl_comments:
                     logger.info("Downloading replay comments.")
