@@ -102,7 +102,7 @@ def clean_download_dir():
     error_count = 0
     lock_count = 0
     try:
-        logger.info('Cleaning up temporary files and folders...')
+        logger.info('Cleaning up temporary files and folders.')
         if Constants.PYTHON_VER[0] == "2":
             directories = (os.walk(pil.dl_path).next()[1])
             files = (os.walk(pil.dl_path).next()[2])
@@ -226,7 +226,7 @@ def new_config():
             logger.separator()
         else:
             try:
-                logger.warn("Could not find configuration file, creating a default one...")
+                logger.warn("Could not find configuration file, creating a default one.")
                 config_file = open(pil.config_path, "w")
                 config_file.write(Constants.CONFIG_TEMPLATE.format(os.getcwd()).strip())
                 config_file.close()
