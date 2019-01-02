@@ -88,6 +88,8 @@ def generate_json_segments():
         try:
             with open(pil.live_folder_path + ".json", 'w') as json_file:
                 json.dump(pil.livestream_obj, json_file, indent=2)
+            if not pil.broadcast_downloader.stream_id:
+                pil.broadcast_downloader.stream_id = pil.livestream_obj['id']
             #check_if_guesting()
             time.sleep(2.5)
         except Exception as e:

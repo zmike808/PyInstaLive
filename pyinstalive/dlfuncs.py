@@ -1,6 +1,6 @@
 import os
 import shutil
-import sys
+import json
 import threading
 import time
 
@@ -144,7 +144,6 @@ def merge_segments():
         if pil.comment_thread_worker and pil.comment_thread_worker.is_alive():
             logger.info("Waiting for comment downloader to finish.")
             pil.comment_thread_worker.join()
-
         logger.info('Merging downloaded files into video.')
         try:
             pil.broadcast_downloader.stitch(live_mp4_file, cleartempfiles=pil.clear_temp_files)
