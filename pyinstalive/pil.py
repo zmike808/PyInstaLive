@@ -40,6 +40,7 @@ def initialize():
     global assemble_arg
     global ffmpeg_path
     global clear_temp_files
+    global has_guest
     ig_api = None
     ig_user = ""
     ig_pass = ""
@@ -68,3 +69,4 @@ def initialize():
     assemble_arg = None
     ffmpeg_path = None
     clear_temp_files = False
+    has_guest = None

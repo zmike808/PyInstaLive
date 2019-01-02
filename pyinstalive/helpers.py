@@ -37,10 +37,10 @@ def strdatetime_compat(epochtime):
     return time.strftime('%m%d%Y_{:s}'.format(epochtime))
 
 
-def check_ffmpeg():
+def command_exists(command):
     try:
         fnull = open(os.devnull, 'w')
-        subprocess.call(["ffmpeg"], stdout=fnull, stderr=subprocess.STDOUT)
+        subprocess.call([command], stdout=fnull, stderr=subprocess.STDOUT)
         return True
     except OSError as e:
         return False
@@ -64,6 +64,21 @@ def bool_str_parse(bool_str):
         return "Invalid"
 
 
+def check_if_guesting():
+    try:
+        broadcast_guest = pil.livestream_obj.get('cobroadcasters', {})[0].get('username')
+    except Exception:
+        broadcast_guest = None
+    print(broadcast_guest)
+    if broadcast_guest and not pil.has_guest:
+        logger.binfo('The livestream owner has started guesting "{}".'.format(broadcast_guest))
+        pil.has_guest = broadcast_guest
+    if not broadcast_guest and pil.has_guest:
+        logger.binfo('The livestream owner has stopped guesting "{}".'.format(broadcast_guest))
+        pil.has_guest = None
+
+
+
 def generate_json_segments():
     while not pil.broadcast_downloader.is_aborted:
         pil.livestream_obj['delay'] = (int(pil.epochtime) - pil.livestream_obj['published_time'])
@@ -73,6 +88,7 @@ def generate_json_segments():
         try:
             with open(pil.live_folder_path + ".json", 'w') as json_file:
                 json.dump(pil.livestream_obj, json_file, indent=2)
+            #check_if_guesting()
             time.sleep(2.5)
         except Exception as e:
             logger.warn(str(e))
@@ -163,7 +179,7 @@ def show_info():
     logger.whiteline()
     logger.info("PyInstaLive version:        {:s}".format(Constants.SCRIPT_VER))
     logger.info("Python version:             {:s}".format(Constants.PYTHON_VER))
-    if not check_ffmpeg():
+    if not command_exists("ffmpeg"):
         logger.error("FFmpeg framework:        Not found")
     else:
         logger.info("FFmpeg framework:           Available")

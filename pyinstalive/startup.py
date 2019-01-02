@@ -60,8 +60,8 @@ def validate_inputs(config, args, unknown_args):
                 logger.warn("Custom config path is invalid, falling back to default path: {:s}".format(pil.config_path))
                 logger.separator()
 
-        if args.savepath:
-            pil.dl_path = args.savepath
+        if args.dlpath:
+            pil.dl_path = args.dlpath
 
         if helpers.bool_str_parse(config.get('pyinstalive', 'show_cookie_expiry')) == "Invalid":
             pil.show_cookie_expiry = False
@@ -130,7 +130,7 @@ def validate_inputs(config, args, unknown_args):
             pil.dl_path = pil.dl_path + '/'
         if not pil.dl_path or not os.path.exists(pil.dl_path):
             pil.dl_path = os.getcwd()
-            if not args.savepath:
+            if not args.dlpath:
                 error_arr.append(['download_path', os.getcwd()])
             else:
                 logger.warn("Custom config path is invalid, falling back to default path: {:s}".format(pil.dl_path))
@@ -149,7 +149,7 @@ def validate_inputs(config, args, unknown_args):
 
         if args.download:
             pil.dl_user = args.download
-        elif not args.clean and not args.info and not args.assemble:
+        elif not args.clean and not args.info and not args.assemble and not args.downloadfollowing:
             logger.error("Missing --download argument. This argument is required.")
             logger.separator()
             return False
@@ -196,10 +196,13 @@ def run():
                         help="PyInstaLive will clean the current download folder of all leftover files.")
     parser.add_argument('-cp', '--configpath', dest='configpath', type=str, required=False,
                         help="Path to a PyInstaLive configuration file.")
-    parser.add_argument('-sp', '--savepath', dest='savepath', type=str, required=False,
+    parser.add_argument('-dp', '--davepath', dest='dlpath', type=str, required=False,
                         help="Path to folder where PyInstaLive should save livestreams and replays.")
     parser.add_argument('-as', '--assemble', dest='assemble', type=str, required=False,
                         help="Path to json file required by the assembler to generate a video file from the segments.")
+    parser.add_argument('-df', '--downloadfollowing', dest='downloadfollowing', action='store_true',
+                        help="PyInstaLive will check for available livestreams and replays from users the account "
+                             "used to login follows.")
 
     # Workaround to 'disable' argument abbreviations
     parser.add_argument('--usernamx', help=argparse.SUPPRESS, metavar='IGNORE')
@@ -231,8 +234,6 @@ def run():
             logger.separator()
             pil.ig_api = auth.authenticate(username=pil.ig_user, password=pil.ig_pass)
         elif args.username and args.password:
-            logger.binfo("Overriding config file with login from arguments.")
-            logger.separator()
             pil.ig_api = auth.authenticate(username=args.username, password=args.password, force_use_login_args=True)
 
         if pil.ig_api:

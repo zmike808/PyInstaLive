@@ -59,3 +59,5 @@ pildev\.ini
 pildev/
 
 \.idea/
+
+*.txt

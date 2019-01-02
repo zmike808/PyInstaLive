@@ -39,7 +39,7 @@ def assemble(user_called=True):
         if not os.path.isdir(ass_segment_dir) or not os.listdir(ass_segment_dir):
             logger.error('Segment directory does not exist or is empty: %s' % ass_segment_dir)
             logger.separator()
-            sys.exit(1)
+            return
         if not os.path.isfile(ass_json_file):
             logger.warn("No matching json file found for the segment directory, trying to continue without it.")
             ass_stream_id = os.listdir(ass_segment_dir)[0].split('-')[0]
@@ -52,7 +52,7 @@ def assemble(user_called=True):
 
         if broadcast_info.get('broadcast_status', '') == 'post_live':
             logger.error('Segments from replay downloads cannot be assembled.')
-            sys.exit(1)
+            return
 
         logger.info("Assembling video segments from folder: {}".format(ass_segment_dir))
         stream_id = str(broadcast_info['id'])

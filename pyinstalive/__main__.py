@@ -1,12 +1,12 @@
 try:  # Python 2
-    import startup
+    from startup import run
 except ImportError:  # Python 3
-    from . import startup
+    from .startup import run
 
 
 def main():
-    startup.run()
+    run()
 
 
 if __name__ == '__main__':
-    startup.run()
+    run()

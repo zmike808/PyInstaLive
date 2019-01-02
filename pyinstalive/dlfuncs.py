@@ -217,6 +217,7 @@ def download_livestream():
             broadcast_guest = None
         if broadcast_guest:
             logger.binfo('This livestream is a dual-live, the current guest is "{}".'.format(broadcast_guest))
+            pil.has_guest = broadcast_guest
         logger.separator()
         print_status(False)
         logger.separator()
@@ -337,12 +338,10 @@ def download_replays():
         logger.info("Finished downloading all available replays.")
         logger.separator()
         helpers.remove_lock()
-        sys.exit(0)
     except Exception as e:
         logger.error('Could not save replay: {:s}'.format(str(e)))
         logger.separator()
         helpers.remove_lock()
-        sys.exit(1)
     except KeyboardInterrupt:
         logger.separator()
         logger.binfo('The download has been aborted by the user, exiting.')
@@ -351,9 +350,60 @@ def download_replays():
             shutil.rmtree(pil.live_folder_path)
         except Exception as e:
             logger.error("Could not remove segment folder: {:s}".format(str(e)))
-            sys.exit(1)
         helpers.remove_lock()
-        sys.exit(0)
+
+
+def download_following():
+    try:
+        logger.info("Checking following users for any livestreams or replays.")
+        broadcast_f_list = pil.ig_api.reels_tray()
+        usernames_available = []
+        if broadcast_f_list['broadcasts']:
+            for broadcast_f in broadcast_f_list['broadcasts']:
+                username = broadcast_f['broadcast_owner']['username']
+                if username not in usernames_available:
+                    usernames_available.append(username)
+
+        if broadcast_f_list.get('post_live', {}).get('post_live_items', []):
+            for broadcast_r in broadcast_f_list.get('post_live', {}).get('post_live_items', []):
+                for broadcast_f in broadcast_r.get("broadcasts", []):
+                    username = broadcast_f['broadcast_owner']['username']
+                    if username not in usernames_available:
+                        usernames_available.append(username)
+        logger.separator()
+        if usernames_available:
+            logger.info("The following users have available livestreams or replays:")
+            logger.info(', '.join(usernames_available))
+            logger.separator()
+            for user in usernames_available:
+                try:
+                    if os.path.isfile(os.path.join(pil.dl_path, user + '.lock')):
+                        logger.warn("Lock file is already present for '{:s}', there is probably another download "
+                                    "ongoing!".format(user))
+                        logger.warn("If this is not the case, manually delete the file '{:s}' and try again.".format(user + '.lock'))
+                    else:
+                        logger.info("Launching daemon process for '{:s}'.".format(user))
+                        start_result = helpers.run_command("pyinstalive -d {:s} -cp '{:s}' -dp '{:s}'".format(user, pil.config_path, pil.dl_path))
+                        if start_result:
+                            logger.warn("Could not start processs: {:s}".format(str(start_result)))
+                        else:
+                            logger.info("Process started successfully.")
+                    logger.separator()
+                    time.sleep(2)
+                except Exception as e:
+                    logger.warn("Could not start processs: {:s}".format(str(e)))
+                except KeyboardInterrupt:
+                    logger.binfo('The process launching has been aborted by the user.')
+                    logger.separator()
+        else:
+            logger.info("There are currently no available livestreams or replays.")
+            logger.separator()
+    except Exception as e:
+        logger.error("Could not finish checking following users: {:s}".format(str(e)))
+    except KeyboardInterrupt:
+        logger.separator()
+        logger.binfo('The checking process has been aborted by the user.')
+        logger.separator()
 
 
 def get_live_comments(comments_json_file):
