@@ -23,7 +23,7 @@ setup(
         ]
     },
     install_requires=[
-        # 'instagram_private_api @ https://github.com/ping/instagram_private_api/archive/%(api)s.tar.gz#egg=instagram_private_api-%(api)s' % {'api': _api_version},
+        'instagram_private_api @ git+https://github.com/JulienMaille/instagram_private_api.git',
         'instagram_private_api_extensions @ https://github.com/ping/instagram_private_api_extensions/archive/%(api)s.tar.gz#egg=instagram_private_api_extensions-%(api)s' % {'api': _api_extensions_version},
         'argparse',
         'configparser'
