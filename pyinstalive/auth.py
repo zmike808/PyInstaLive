@@ -47,6 +47,27 @@ def onlogin_callback(api, cookie_file):
         logger.separator()
 
 
+def login(ig_api: Client):
+    try:
+        ig_api.login()
+    except ClientCheckpointRequiredError as e:
+        challenge_url = e.challenge_url
+
+        challenge_pattern = r'.*challenge/(?P<account_id>\d.*)/(?P<identifier>\w.*)/'
+        match = re.search(challenge_pattern, challenge_url)
+        if not match:
+            raise ClientError('Unable to parse challenge')
+
+        match_dict = match.groupdict()
+        account_id = match_dict['account_id']
+        identifier = match_dict['identifier']
+
+        res = ig_api.choose_confirm_method(account_id,
+                                           identifier)  # confirm_method param has default value 1, you can pass 0
+        code = input('Enter code from email: ')
+        ig_api.send_challenge(account_id, identifier, code)
+
+
 def authenticate(username, password, force_use_login_args=False):
     ig_api = None
     try:
@@ -63,54 +84,36 @@ def authenticate(username, password, force_use_login_args=False):
             logger.info('Creating a new one.')
 
             # login new
-            # ig_api = Client(
-            #     username, password,
-            #     on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
-            api = Client(username, password, on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
-            try:
-                api.login()
-            except ClientCheckpointRequiredError as e:
-                challenge_url = e.challenge_url
-
-                challenge_pattern = r'.*challenge/(?P<account_id>\d.*)/(?P<identifier>\w.*)/'
-                match = re.search(challenge_pattern, challenge_url)
-                if not match:
-                    raise ClientError('Unable to parse challenge')
-
-                match_dict = match.groupdict()
-                account_id = match_dict['account_id']
-                identifier = match_dict['identifier']
-
-                res = api.choose_confirm_method(account_id,
-                                                identifier)  # confirm_method param has default value 1, you can pass 0
-                code = input('Enter code from email: ')
-                api.send_challenge(account_id, identifier, code)
+            ig_api = Client(
+                username, password,
+                on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+            # ig_api = Client(username, password, on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+            login(ig_api)
         else:
             with open(cookie_file) as file_data:
                 cached_settings = json.load(file_data, object_hook=from_json)
-            # logger.info('Using settings file: {0!s}'.format(cookie_file))
+            logger.info('Using settings file: {0!s}'.format(cookie_file))
 
-            device_id = cached_settings.get('device_id')
+            # device_id = cached_settings.get('device_id')
             # reuse auth cached_settings
             try:
                 ig_api = Client(
                     username, password,
                     settings=cached_settings, proxy=pil.proxy)
-                ig_api.login()
 
             except ClientCookieExpiredError as e:
                 logger.warn('The current cookie file has expired, creating a new one.')
 
                 ig_api = Client(
                     username, password,
-                    device_id=device_id,
                     on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+                login(ig_api)
 
     except (ClientLoginError, ClientError) as e:
         logger.separator()
         logger.error('Could not login: {:s}'.format(e.error_response))
-        # logger.error('{:s}'.format(json.loads(e.error_response).get("message", e.error_response)))
-        # logger.error('{:s}'.format(e.error_response))
+        logger.error('{:s}'.format(json.loads(e.error_response).get("message", e.error_response)))
+        logger.error('{:s}'.format(e.error_response))
         logger.separator()
     except Exception as e:
         if str(e).startswith("unsupported pickle protocol"):
