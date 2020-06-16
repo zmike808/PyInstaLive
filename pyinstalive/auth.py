@@ -3,6 +3,7 @@ import datetime
 import json
 import os.path
 import sys
+import re
 import traceback
 
 try:
