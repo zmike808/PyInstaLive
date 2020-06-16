@@ -2,7 +2,7 @@ from setuptools import setup
 
 __author__ = 'notcammy'
 __email__ = 'neus2benen@gmail.com'
-__version__ = '3.2.3'
+__version__ = '3.2.4'
 
 _api_version = '1.6.0'
 _api_extensions_version = '0.3.9'
@@ -23,7 +23,7 @@ setup(
         ]
     },
     install_requires=[
-        'instagram_private_api @ https://github.com/ping/instagram_private_api/archive/%(api)s.tar.gz#egg=instagram_private_api-%(api)s' % {'api': _api_version},
+        # 'instagram_private_api @ https://github.com/ping/instagram_private_api/archive/%(api)s.tar.gz#egg=instagram_private_api-%(api)s' % {'api': _api_version},
         'instagram_private_api_extensions @ https://github.com/ping/instagram_private_api_extensions/archive/%(api)s.tar.gz#egg=instagram_private_api_extensions-%(api)s' % {'api': _api_extensions_version},
         'argparse',
         'configparser'

@@ -16,12 +16,12 @@ except ImportError:
 
 try:
     from instagram_private_api import (
-        Client, ClientError, ClientLoginError,
+        Client, ClientError, ClientCheckpointRequiredError, ClientLoginError,
         ClientCookieExpiredError, ClientLoginRequiredError)
 except ImportError:
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     from instagram_private_api import (
-        Client, ClientError, ClientLoginError,
+        Client, ClientError, ClientCheckpointRequiredError, ClientLoginError,
         ClientCookieExpiredError, ClientLoginRequiredError)
 
 
@@ -62,9 +62,28 @@ def authenticate(username, password, force_use_login_args=False):
             logger.info('Creating a new one.')
 
             # login new
-            ig_api = Client(
-                username, password,
-                on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+            # ig_api = Client(
+            #     username, password,
+            #     on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+            api = Client(username, password, on_login=lambda x: onlogin_callback(x, cookie_file), proxy=pil.proxy)
+            try:
+                api.login()
+            except ClientCheckpointRequiredError as e:
+                challenge_url = e.challenge_url
+
+                challenge_pattern = r'.*challenge/(?P<account_id>\d.*)/(?P<identifier>\w.*)/'
+                match = re.search(challenge_pattern, challenge_url)
+                if not match:
+                    raise ClientError('Unable to parse challenge')
+
+                match_dict = match.groupdict()
+                account_id = match_dict['account_id']
+                identifier = match_dict['identifier']
+
+                res = api.choose_confirm_method(account_id,
+                                                identifier)  # confirm_method param has default value 1, you can pass 0
+                code = input('Enter code from email: ')
+                api.send_challenge(account_id, identifier, code)
         else:
             with open(cookie_file) as file_data:
                 cached_settings = json.load(file_data, object_hook=from_json)
@@ -76,6 +95,7 @@ def authenticate(username, password, force_use_login_args=False):
                 ig_api = Client(
                     username, password,
                     settings=cached_settings, proxy=pil.proxy)
+                ig_api.login()
 
             except ClientCookieExpiredError as e:
                 logger.warn('The current cookie file has expired, creating a new one.')
