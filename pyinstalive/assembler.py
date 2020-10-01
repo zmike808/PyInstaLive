@@ -36,8 +36,8 @@ def assemble(user_called=True, retry_with_zero_m4v=False):
         ass_mp4_file = os.path.join(pil.dl_path, os.path.basename(ass_json_file).replace("_downloads", "").replace(".json", ".mp4"))
         ass_segment_dir = pil.assemble_arg if not pil.assemble_arg.endswith(".json") else pil.assemble_arg.replace(".json", "")
 
-        if pil.verbose:
-            logger.plain("{}\n{}\n{}".format(ass_json_file, ass_mp4_file, ass_segment_dir))
+        # if pil.verbose:
+        #     logger.plain("{}\n{}\n{}".format(ass_json_file, ass_mp4_file, ass_segment_dir))
 
         broadcast_info = {}
         if not os.path.isdir(ass_segment_dir) or not os.listdir(ass_segment_dir):
