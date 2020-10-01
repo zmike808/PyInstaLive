@@ -2,9 +2,9 @@ from setuptools import setup
 
 __author__ = 'notcammy'
 __email__ = 'neus2benen@gmail.com'
-__version__ = '3.2.5'
+__version__ = '3.2.6'
 
-_api_version = '1.6.0'
+_api_version = '5.5.0'
 _api_extensions_version = '0.3.9'
 
 long_description = 'This Python script enables you to download any ongoing Instagram livestreams as well as any ' \
