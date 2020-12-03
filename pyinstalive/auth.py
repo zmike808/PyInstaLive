@@ -28,18 +28,6 @@ except ImportError:
         ClientChallengeRequiredError)
 
 
-# def to_json(python_object):
-#     if isinstance(python_object, bytes):
-#         return {'__class__': 'bytes',
-#                 '__value__': codecs.encode(python_object, 'base64').decode()}
-#     raise TypeError(repr(python_object) + ' is not JSON serializable')
-
-
-# def from_json(json_object):
-#     if '__class__' in json_object and json_object.get('__class__') == 'bytes':
-#         return codecs.decode(json_object.get('__value__').encode(), 'base64')
-#     return json_object
-
 import json
 import codecs
 import re
@@ -66,17 +54,6 @@ def onlogin_callback(api, cookie_file):
         json.dump(cache_settings, outfile, default=to_json)
         logger.info('New cookie file was made: {0!s}'.format(os.path.basename(cookie_file)))
         logger.separator()
-
-# def onlogin_callback(api, new_settings_file):
-#     cache_settings = api.settings
-#     with open(new_settings_file, 'w') as outfile:
-#         json.dump(cache_settings, outfile, default=to_json)
-#         print('SAVED: {0!s}'.format(new_settings_file))
-
-
-username = ''
-password = ''
-settings_file = '/path/to/file/settings_{}.json'.format(username)
 
 CHALLENGE_EMAIL = ''
 CHALLENGE_PASSWORD = ''
@@ -114,12 +91,12 @@ def get_code_from_email(username):
     return False
 
 
-api = Client(username, password, on_login=lambda x: onlogin_callback(x, settings_file))
 
 def login(api: Client):
+    username = pil.ig_user
     try:
         api.login()
-    except ClientCheckpointRequiredError as e:
+    except (ClientCheckpointRequiredError, ClientChallengeRequiredError) as e:
         challenge_url = e.challenge_url
 
         challenge_pattern = r'.*challenge/(?P<account_id>\d.*)/(?P<identifier>\w.*)/'
@@ -174,7 +151,7 @@ def authenticate(username, password, force_use_login_args=False):
                     username, password,
                     settings=cached_settings, proxy=pil.proxy)
 
-            except (ClientSentryBlockError, ClientChallengeRequiredError, ClientCookieExpiredError, ClientLoginError, ClientError) as e:
+            except (ClientSentryBlockError, ClientChallengeRequiredError, ClientCheckpointRequiredError, ClientCookieExpiredError, ClientLoginError, ClientError) as e:
                 logger.separator()
                 logger.warn('Some sort of login exception!')
                 if pil.verbose:
